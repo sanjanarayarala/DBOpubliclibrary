@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Page</title>
+    <!-- Link to external CSS file -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <div class="login-container">
+        <!-- Logo Section -->
+        <div class="logo-container">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Library Logo" class="logo">
+        </div>
+
+        <!-- Login Form Section -->
+        <h2>Login</h2>
+        <form id="loginForm" method="POST" action="/login">
+            <div class="input-group">
+                <label for="username">Username:</label>
+                <input type="text" id="username" name="username" required>
+            </div>
+            <div class="input-group">
+                <label for="password">Password:</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            <button type="submit">Login</button>
+        </form>
+        
+        <!-- Error message for invalid credentials -->
+        {% if error %}
+        <p id="error-message" style="color: red;">{{ error }}</p>
+        {% endif %}
+    </div>
+
+    <!-- Link to external JavaScript file -->
+    <!--<script src="{{ url_for('static', filename='js/login.js') }}"></script>-->
+</body>
+</html>
