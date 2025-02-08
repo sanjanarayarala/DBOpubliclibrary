@@ -1,0 +1,1321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Library Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            display: flex;
+            height: 100vh;
+        }
+        .left-pane {
+            width: 250px;
+            background-color: #f4f4f4;
+            padding: 20px;
+            border-right: 2px solid #ddd;
+            box-sizing: border-box;
+            height: 100vh;
+            overflow-y: auto;
+        }
+        .left-pane h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        .left-pane ul {
+            list-style: none;
+            padding: 0;
+        }
+        .left-pane ul li {
+            margin: 10px 0;
+        }
+        .left-pane ul li a {
+            text-decoration: none;
+            {#color: #28a745;#}
+            font-size: 16px;
+            padding: 8px 12px;
+            display: block;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+        .left-pane ul li a:hover {
+            background-color: #e9ecef;
+        }
+        .left-pane ul li a.active {
+            background-color: black;
+            color: white;
+        }
+        .main-content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        .filter-panel {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .filter-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            align-items: end;
+        }
+        .filter-item {
+            display: flex;
+            flex-direction: column;
+        }
+        .filter-item label {
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #495057;
+        }
+        select, input {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .chart-container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            height: 400px;
+            position: relative;
+            margin-bottom: 20px;
+        }
+        .data-table-container {
+            margin-top: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .data-table-header {
+            padding: 15px 20px;
+            background-color: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+            border-radius: 8px 8px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .data-table-content {
+            display: none;
+            padding: 20px;
+            overflow-x: auto;
+        }
+        .data-table-content1 {
+    display: block; /* Ensure it is not hidden */
+}
+        .data-table-content.expanded {
+            display: block;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #dee2e6;
+        }
+        th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            color: #495057;
+        }
+        tr:hover {
+            background-color: #f8f9fa;
+        }
+        .toggle-table {
+            background: none;
+            border: none;
+            color: #007BFF;
+            cursor: pointer;
+            padding: 5px 10px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .toggle-table:hover {
+            background-color: #f8f9fa;
+        }
+        .toggle-icon {
+            transition: transform 0.3s;
+        }
+        .toggle-icon.expanded {
+            transform: rotate(180deg);
+        }
+        .user-query-container {
+            padding: 20px;
+        }
+
+        .filter-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .filter-item {
+            margin-bottom: 10px;
+        }
+
+        .filter-item label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+
+        .filter-item select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .results-table th,
+        .results-table td {
+            padding: 12px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+
+        .results-table th {
+            background-color: #f5f5f5;
+            font-weight: 600;
+        }
+
+        .results-table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+    </style>
+</head>
+<body>
+<header>
+        <nav class="navbar">
+            <div class="navbar-left">
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Library Logo" class="logo">
+                <ul class="nav-links">
+                    <li><a href="{{ url_for('index2') }}">Manage Books</a></li>
+                    <li><a href="{{ url_for('amagazines') }}">Manage Magazines</a></li>
+                    <li><a href="{{ url_for('aevents') }}">Manage Events</a></li>
+                    <li><a href="{{ url_for('ausers') }}">Manage Users</a></li>
+                    <li class="dropdown">
+                        <a href="{{ url_for('astats2') }}">View & Query Dashboard</a>
+                    </li>
+                </ul>
+            </div>
+            <div class="navbar-right">
+                <span class="username">Admin</span>
+            </div>
+        </nav>
+    </header>
+    <div class="left-pane">
+        <h3 style="margin-top: 80px; padding: 10px;">Library Insights</h3>
+        <ul>
+            <li><a href="#" class="active" id="borrowed-trend">Books Borrowed Trend</a></li>
+            <li><a href="#" id="future-view-1">Top N books</a></li>
+            <li><a href="#" id="future-view-2">Users Query Dashboard</a></li>
+            <li><a href="#" id="future-view-3">Magazine Query Dashboard</a></li>
+            <li><a href="#" id="future-view-4">Book Query Dashboard</a></li>
+            <li><a href="#" id="future-view-5">Events Query Dashboard</a></li>
+        </ul>
+    </div>
+
+    <div class="main-content future-view" id="future-view-1-content" style="display: none;">
+    <h2 style="margin-top: 80px; padding: 10px;">Top N Books</h2>
+
+    <div class="filter-panel">
+        <div class="filter-group">
+            <div class="filter-item">
+                <label for="top-n-limit">Number of Top Books:</label>
+                <input type="number" id="top-n-limit" min="1" value="3">
+            </div>
+            <div class="filter-item">
+                <button style="width: auto" id="fetch-top-n">Fetch N Books</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="data-table-container">
+        <div class="data-table-header">
+            <h3 style="margin: 0;">Top N Books</h3>
+        </div>
+        <div class="data-table-content1">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Total Copies</th>
+                        <th>Rank</th>
+                    </tr>
+                </thead>
+                <tbody id="top-n-table-body">
+                    <!-- Data will be populated here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+    <script>
+    // Fetch and render Top N Books
+    async function fetchTopNBooks() {
+        const limit = document.getElementById('top-n-limit').value;
+
+        try {
+            const response = await fetch(`/fetch_top_n_books?limit=${limit}`);
+            const data = await response.json();
+
+            populateTopNTable(data);
+        } catch (error) {
+            console.error('Error fetching Top N Books:', error);
+        }
+    }
+
+    // Populate the Top N Books table
+    function populateTopNTable(data) {
+
+        const tableBody = document.getElementById('top-n-table-body');
+        tableBody.innerHTML = '';
+
+        data.forEach(item => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${item.title}</td>
+                <td>${item.total_copies}</td>
+                <td>${item.rank_by_copies}</td>
+            `;
+            tableBody.appendChild(row);
+        });
+    }
+
+    // Event listener for the fetch data button
+    document.getElementById('fetch-top-n').addEventListener('click', fetchTopNBooks);
+
+    // Menu item click handlers
+    document.getElementById('future-view-1').addEventListener('click', function (e) {
+        e.preventDefault();
+        document.querySelector('.main-content').style.display = 'none';
+        document.getElementById('future-view-1-content').style.display = 'block';
+    });
+</script>
+    <div class="main-content" id="borrowed-trend-content" style="display: block;">
+        <h2 style="margin-top: 80px; padding: 10px;">Books Borrowed Trend</h2>
+
+        <div class="filter-panel">
+            <div class="filter-group">
+                <div class="filter-item">
+                    <label for="trend-type">Trend Type:</label>
+                    <select id="trend-type">
+                        <option value="most">Most Borrowed</option>
+                        <option value="least">Least Borrowed</option>
+                    </select>
+                </div>
+
+                <div class="filter-item">
+                    <label for="branch-select">Branch:</label>
+                    <select id="branch-select">
+                        <option value="">All Branches</option>
+                    </select>
+                </div>
+
+                <div class="filter-item">
+                    <label for="category-select">Category:</label>
+                    <select id="category-select">
+                        <option value="">All Categories</option>
+                    </select>
+                </div>
+
+                <div class="filter-item">
+                    <label for="view-select">View Results By:</label>
+                    <select id="view-select">
+                        <option value="books">Books</option>
+                        <option value="categories">Categories</option>
+                    </select>
+                </div>
+
+                <div class="filter-item">
+                    <label for="limit">Limit:</label>
+                    <input type="number" id="limit" min="1" value="20">
+                </div>
+
+                <div class="filter-item">
+                    <button id="fetch-data">Update Chart</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <canvas id="borrowedChart"></canvas>
+        </div>
+
+        <div class="data-table-container">
+            <div class="data-table-header">
+{#                <h3 style="margin: 0;">Detailed Data</h3>#}
+                <button class="toggle-table">
+                    View Data
+                    <span class="toggle-icon">▼</span>
+                </button>
+            </div>
+            <div class="data-table-content">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Category</th>
+                            <th>Currently Borrowed</th>
+                            <th>Currently Available</th>
+                            <th>Total Copies</th>
+                        </tr>
+                    </thead>
+                    <tbody id="data-table-body">
+                        <!-- Data will be populated here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let chartInstance = null;
+        let currentData = null;
+
+        // Populate filters dynamically
+        async function populateFilters() {
+            try {
+                const branchResponse = await fetch('/fetch_branches');
+                const branches = await branchResponse.json();
+
+                const branchSelect = document.getElementById('branch-select');
+                branches.forEach(branch => {
+                    const option = document.createElement('option');
+                    option.value = branch[0];
+                    option.textContent = branch[1];
+                    branchSelect.appendChild(option);
+                });
+
+                const categoryResponse = await fetch('/fetch_categories');
+                const categories = await categoryResponse.json();
+
+                const categorySelect = document.getElementById('category-select');
+                categories.forEach(category => {
+                    const option = document.createElement('option');
+                    option.value = category;
+                    option.textContent = category;
+                    categorySelect.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error populating filters:', error);
+            }
+        }
+
+        // Initialize
+document.addEventListener('DOMContentLoaded', () => {
+    // Initialize dropdowns
+    fetchBooks();
+    fetchCategories();
+    fetchBranches();
+
+    // Populate initial filters
+    populateFilters();
+
+    // Fetch initial data
+    fetchData();
+
+    // Add event listeners to the left menu links
+    document.querySelectorAll('.left-pane a').forEach(link => {
+        link.addEventListener('click', function (e) {
+            e.preventDefault();
+
+            const viewId = this.id;
+
+            // Remove active class from all links and add it to the clicked one
+            document.querySelectorAll('.left-pane a').forEach(a => a.classList.remove('active'));
+            this.classList.add('active');
+
+            // Hide all main content views
+            document.querySelectorAll('.main-content').forEach(content => content.style.display = 'none');
+
+            // Show the selected content based on the clicked link's ID
+            if (viewId === 'borrowed-trend') {
+                document.querySelector('.main-content#borrowed-trend-content').style.display = 'block';
+            } else if (viewId === 'future-view-1') {
+                document.querySelector('.main-content#future-view-1-content').style.display = 'block';
+            } else if (viewId === 'future-view-2') {
+                document.querySelector('.main-content#future-view-2-content').style.display = 'block';
+            }else if (viewId === 'future-view-3') {
+                document.querySelector('.main-content#future-view-3-content').style.display = 'block';
+                initializeMagazineDashboard();
+            }else if (viewId === 'future-view-4') {
+                document.querySelector('.main-content#future-view-4-content').style.display = 'block';
+                initializeBooksDashboard();
+            }else if (viewId === 'future-view-5') {
+                document.querySelector('.main-content#future-view-5-content').style.display = 'block';
+                initializeEventsDashboard();
+            }
+        });
+    });
+
+    // Event listener for filter application
+    document.getElementById('apply-filters').addEventListener('click', applyFilters);
+    // Clear Filters functionality
+    document.getElementById('clear-filters').addEventListener('click', () => {
+        // Reset all filter dropdowns to their default value
+        document.querySelectorAll('.filter-grid select').forEach(select => {
+            select.value = '';
+        });
+
+        // Automatically fetch data with default filter values
+        applyFilters();
+    });
+});
+
+
+        // Fetch and render data
+        async function fetchData() {
+            const trendType = document.getElementById('trend-type').value;
+            const limit = document.getElementById('limit').value;
+            const branchId = document.getElementById('branch-select').value || null;
+            const category = document.getElementById('category-select').value || null;
+            const view = document.getElementById('view-select').value || 'books';
+
+            try {
+                const endpoint = trendType === 'most' ? '/most_borrowed_books' : '/least_borrowed_books';
+                const response = await fetch(
+                    `${endpoint}?limit=${limit}&branch_id=${branchId}&category=${category}&view=${view}`
+                );
+                currentData = await response.json();
+
+                const labels = view === 'books' ?
+                    ['Currently Borrowed', 'Currently Available'] :
+                    ['Borrowed (Category)', 'Available (Category)'];
+
+                renderChart(currentData, labels[0], labels[1]);
+                populateDataTable(currentData);
+            } catch (error) {
+                console.error('Error fetching data:', error);
+            }
+        }
+
+        // Render chart helper function
+        function renderChart(books, borrowedLabel, availableLabel) {
+            const ctx = document.getElementById('borrowedChart').getContext('2d');
+
+            if (chartInstance) {
+                chartInstance.destroy();
+            }
+
+            const labels = books.map(book => book.title);
+            const borrowedData = books.map(book => book.currently_borrowed);
+            const availableData = books.map(book => book.currently_available);
+
+            chartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: borrowedLabel,
+                            data: borrowedData,
+                            backgroundColor: 'rgba(255, 99, 132, 0.7)',
+                            hoverBackgroundColor: 'rgba(255, 99, 132, 1)'
+                        },
+                        {
+                            label: availableLabel,
+                            data: availableData,
+                            backgroundColor: 'rgba(75, 192, 192, 0.7)',
+                            hoverBackgroundColor: 'rgba(75, 192, 192, 1)'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            stacked: true,
+                            title: { display: true, text: 'Books' }
+                        },
+                        y: {
+                            stacked: true,
+                            title: { display: true, text: 'Count' }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Populate data table
+        function populateDataTable(data) {
+            const tableBody = document.getElementById('data-table-body');
+            tableBody.innerHTML = '';
+
+            data.forEach(item => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${item.title}</td>
+                    <td>${item.category || '-'}</td>
+                    <td>${item.currently_borrowed}</td>
+                    <td>${item.currently_available}</td>
+                    <td>${item.currently_borrowed + item.currently_available}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        // Toggle table visibility
+        document.querySelector('.toggle-table').addEventListener('click', function() {
+            const tableContent = document.querySelector('.data-table-content');
+            const toggleIcon = document.querySelector('.toggle-icon');
+            tableContent.classList.toggle('expanded');
+            toggleIcon.classList.toggle('expanded');
+        });
+
+        // Event listener for the fetch data button
+        document.getElementById('fetch-data').addEventListener('click', fetchData);
+
+        // Menu item click handlers
+        document.querySelectorAll('.left-pane a').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                document.querySelectorAll('.left-pane a').forEach(a => a.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+    </script>
+
+<div class="main-content future-view" id="future-view-2-content" style="display: none;">
+        <h2 style="margin-top: 80px; padding: 10px;">Users Query Dashboard</h2>
+
+        <div class="user-query-container">
+                <div class="filter-grid">
+                    <div class="filter-item">
+                        <label for="membership-type">Membership Type</label>
+                        <select id="membership-type">
+                            <option value="">All</option>
+                            <option value="BASIC">Basic</option>
+                            <option value="GOLD">Gold</option>
+                            <option value="EXECUTIVE">Executive</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-item">
+                        <label for="borrow-status">Borrowed Status</label>
+                        <select id="borrow-status">
+                            <option value="">All</option>
+                            <option value="true">Has Borrowed</option>
+                            <option value="false">Never Borrowed</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-item">
+                        <label for="penalty-status">Penalty Status</label>
+                        <select id="penalty-status">
+                            <option value="">All</option>
+                            <option value="true">Has Penalty</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-item">
+                        <label for="book-select">Book</label>
+                        <select id="book-select">
+                            <option value="">All Books</option>
+                            <!-- Will be populated dynamically -->
+                        </select>
+                    </div>
+
+                    <div class="filter-item">
+                        <label for="category-filter">Category</label>
+                        <select id="category-filter">
+                            <option value="">All Categories</option>
+                            <!-- Will be populated dynamically -->
+                        </select>
+                    </div>
+
+                    <div class="filter-item">
+                        <label for="branch-filter">Branch</label>
+                        <select id="branch-filter">
+                            <option value="">All Branches</option>
+                            <!-- Will be populated dynamically -->
+                        </select>
+                    </div>
+
+                <button id="apply-filters" class="apply-filters-btn">Apply Filters</button>
+                <button id="clear-filters" class="clear-filters-btn">Clear Filters</button>
+
+            </div>
+
+            <table class="results-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Membership</th>
+                        <th>Items Borrowed</th>
+                        <th>Penalty</th>
+                        <th>Phone</th>
+                    </tr>
+                </thead>
+                <tbody id="users-table-body">
+                    <!-- Will be populated dynamically -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+
+        function showView(viewId) {
+            // Hide all views
+            document.querySelectorAll('.main-content').forEach(content => {
+                content.style.display = 'none';
+            });
+
+            // Remove active class from all links
+            document.querySelectorAll('.left-pane a').forEach(link => {
+                link.classList.remove('active');
+            });
+
+            // Show selected view and activate link
+            document.getElementById(viewId).classList.add('active');
+            document.getElementById(`${viewId}-content`).style.display = 'block';
+        }
+
+        async function fetchBooks() {
+            try {
+                const response = await fetch('/api/books/all');
+                const books = await response.json();
+                const select = document.getElementById('book-select');
+                books.forEach(book => {
+                    const option = document.createElement('option');
+                    option.value = book.ItemID;
+                    option.textContent = book.Title;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error fetching books:', error);
+            }
+        }
+
+        async function fetchCategories() {
+            try {
+                const response = await fetch('/fetch_categories');
+                const categories = await response.json();
+                const select = document.getElementById('category-filter');
+                categories.forEach(category => {
+                    const option = document.createElement('option');
+                    option.value = category;
+                    option.textContent = category;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error fetching categories:', error);
+            }
+        }
+
+        async function fetchBranches() {
+            try {
+
+                const branchResponse = await fetch('/fetch_branches');
+                const branches = await branchResponse.json();
+
+                const branchSelect = document.getElementById('branch-filter');
+                branches.forEach(branch => {
+                    const option = document.createElement('option');
+                    option.value = branch[0];
+                    option.textContent = branch[1];
+                    branchSelect.appendChild(option);
+                });
+
+            } catch (error) {
+                console.error('Error fetching branches:', error);
+            }
+        }
+
+        async function applyFilters() {
+            const filters = {
+                membership: document.getElementById('membership-type').value,
+                has_borrowed: document.getElementById('borrow-status').value,
+                has_penalty: document.getElementById('penalty-status').value,
+                book: document.getElementById('book-select').value,
+                category: document.getElementById('category-filter').value,
+                branch: document.getElementById('branch-filter').value
+            };
+
+            const queryParams = new URLSearchParams(filters);
+
+            try {
+                document.getElementById('apply-filters').classList.add('loading');
+                const response = await fetch(`/api/users/filter?${queryParams}`);
+                const users = await response.json();
+
+                const tbody = document.getElementById('users-table-body');
+                tbody.innerHTML = '';
+
+                users.forEach(user => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${user.FirstName} ${user.MiddleName || ''} ${user.LastName}</td>
+                        <td>${user.EmailID}</td>
+                        <td>${user.MembershipType}</td>
+                        <td>${user.ItemsBorrowed || 0}</td>
+                        <td>$${user.Penalty || '0.00'}</td>
+                        <td>${user.Phone || ''}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            } catch (error) {
+                console.error('Error applying filters:', error);
+            } finally {
+                document.getElementById('apply-filters').classList.remove('loading');
+            }
+        }
+    </script>
+<div class="main-content" id="future-view-3-content" style="display: none;">
+    <h2 style="margin-top: 80px; padding: 10px;">Magazine Query Dashboard</h2>
+
+    <div class="filter-panel">
+        <div class="filter-group">
+            <div class="filter-item">
+                <label for="category">Category:</label>
+                <select id="category">
+                    <option value="">All Categories</option>
+                </select>
+            </div>
+
+            <div class="filter-item">
+                <label for="branch">Branch:</label>
+                <select id="branch">
+                    <option value="">All Branches</option>
+                </select>
+            </div>
+
+            <div class="filter-item">
+                <label for="mag-select">Magazine:</label>
+                <select id="mag-select">
+                    <option value="">All Magazines</option>
+                </select>
+            </div>
+
+            <div class="filter-item">
+                <label for="availability">Availability:</label>
+                <select id="availability">
+                    <option value="">All</option>
+                    <option value="online">Online Only</option>
+                    <option value="instore">In Store Only</option>
+                    <option value="both">Both Online and In Store</option>
+                </select>
+            </div>
+
+            <div class="filter-item">
+                <button id="fetch-magazines" onclick="fetchMagazines()">Search</button>
+            </div>
+        </div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Title</th>
+                <th>Category</th>
+                <th>Availability</th>
+                <th>Locations</th>
+            </tr>
+        </thead>
+        <tbody id="magazinesTable"></tbody>
+    </table>
+<script>
+// Initialize the Magazine Query Dashboard
+function initializeMagazineDashboard() {
+    fetchCategories1();
+    fetchBranches1();
+    fetchMagazineTitles();
+}
+// Show/hide branch selector based on availability filter
+document.addEventListener('change', event => {
+    if (event.target.id === 'availability') {
+        if (event.target.value === 'instore') {
+            document.getElementById('branch-group').style.display = 'block';
+        } else {
+            document.getElementById('branch-group').style.display = 'none';
+            document.getElementById('branch').value = '';
+        }
+    }
+});
+
+// Fetch and populate categories
+async function fetchCategories1() {
+            try {
+                const response = await fetch('/fetch_categories');
+                const categories = await response.json();
+                const select = document.getElementById('category');
+                categories.forEach(category => {
+                    const option = document.createElement('option');
+                    option.value = category;
+                    option.textContent = category;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error fetching categories:', error);
+            }
+        }
+// Fetch and populate branches
+ async function fetchBranches1() {
+            try {
+
+                const branchResponse = await fetch('/fetch_branches');
+                const branches = await branchResponse.json();
+
+                const branchSelect = document.getElementById('branch');
+                branches.forEach(branch => {
+                    const option = document.createElement('option');
+                    option.value = branch[0];
+                    option.textContent = branch[1];
+                    branchSelect.appendChild(option);
+                });
+
+            } catch (error) {
+                console.error('Error fetching branches:', error);
+            }
+        }
+
+async function fetchMagazineTitles() {
+    try {
+        const response = await fetch('/fetch_magazine_titles');
+        const books = await response.json();
+        console.log(books);
+        const select = document.getElementById('mag-select');
+        books.forEach(book => {
+            const option = document.createElement('option');
+            option.value = book;
+            option.textContent = book;
+            select.appendChild(option);
+        });
+    } catch (error) {
+        console.error('Error fetching books:', error);
+    }
+}
+
+
+async function fetchMagazines() {
+    const filters = {
+        category: document.getElementById('category').value,
+        title: document.getElementById('mag-select').value,
+        availability: document.getElementById('availability').value,
+        branch_id: document.getElementById('branch').value
+    };
+
+    const queryParams = new URLSearchParams(filters);
+
+    try {
+        // Add a loading indicator if required
+        document.querySelector('button[onclick="fetchMagazines()"]').classList.add('loading');
+
+        // Fetch data from the server
+        const response = await fetch(`/fetch_magazines?${queryParams}`);
+        const magazines = await response.json();
+
+        // Clear and populate the table
+        const tbody = document.getElementById('magazinesTable');
+        tbody.innerHTML = '';
+
+        magazines.forEach(magazine => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${magazine.title}</td>
+                <td>${magazine.category}</td>
+                <td>${magazine.availability}</td>
+                <td>${magazine.locations.join(', ') || 'Online Only'}</td>
+            `;
+            tbody.appendChild(row);
+        });
+    } catch (error) {
+        console.error('Error fetching magazines:', error);
+    } finally {
+        // Remove the loading indicator
+        document.querySelector('button[onclick="fetchMagazines()"]').classList.remove('loading');
+    }
+}
+</script>
+</div>
+
+<div class="main-content" id="future-view-4-content" style="display: none;">
+    <h2 style="margin-top: 80px; padding: 10px;">Books Query Dashboard</h2>
+
+    <div class="filter-panel">
+        <div class="filter-group">
+            <div class="filter-item">
+                <label for="book-category">Category:</label>
+                <select id="book-category">
+                    <option value="">All Categories</option>
+                </select>
+            </div>
+
+            <div class="filter-item">
+                <label for="book-branch">Branch:</label>
+                <select id="book-branch">
+                    <option value="">All Branches</option>
+                </select>
+            </div>
+
+            <div class="filter-item">
+                <label for="book-select-filter">Book:</label>
+                <select id="book-select-filter">
+                    <option value="">All Books</option>
+                </select>
+            </div>
+
+            <div class="filter-item">
+                <label for="book-availability">Availability:</label>
+                <select id="book-availability">
+                    <option value="">All</option>
+                    <option value="online">Online Only</option>
+                    <option value="instore">In Store Only</option>
+                    <option value="both">Both Online and In Store</option>
+                </select>
+            </div>
+
+            <div class="filter-item">
+                <button id="fetch-books" onclick="fetchBooksByFilters()">Search</button>
+            </div>
+        </div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Title</th>
+                <th>Category</th>
+                <th>Availability</th>
+                <th>Locations</th>
+            </tr>
+        </thead>
+        <tbody id="booksTable"></tbody>
+    </table>
+<script>
+// Initialize the Magazine Query Dashboard
+function initializeBooksDashboard() {
+    fetchCategories2();
+    fetchBranches2();
+    fetchBookTitles();
+}
+
+// Show/hide branch selector based on availability filter
+document.addEventListener('change', event => {
+    if (event.target.id === 'availability') {
+        if (event.target.value === 'instore') {
+            document.getElementById('branch-group').style.display = 'block';
+        } else {
+            document.getElementById('branch-group').style.display = 'none';
+            document.getElementById('branch').value = '';
+        }
+    }
+});
+
+// Fetch and populate categories
+async function fetchCategories2() {
+            try {
+                const response = await fetch('/fetch_categories');
+                const categories = await response.json();
+                const select = document.getElementById('book-category');
+                categories.forEach(category => {
+                    const option = document.createElement('option');
+                    option.value = category;
+                    option.textContent = category;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error fetching categories:', error);
+            }
+        }
+// Fetch and populate branches
+ async function fetchBranches2() {
+            try {
+
+                const branchResponse = await fetch('/fetch_branches');
+                const branches = await branchResponse.json();
+
+                const branchSelect = document.getElementById('book-branch');
+                branches.forEach(branch => {
+                    const option = document.createElement('option');
+                    option.value = branch[0];
+                    option.textContent = branch[1];
+                    branchSelect.appendChild(option);
+                });
+
+            } catch (error) {
+                console.error('Error fetching branches:', error);
+            }
+        }
+
+async function fetchBookTitles() {
+    try {
+        const response = await fetch('/fetch_book_titles');
+        const books = await response.json();
+        const select = document.getElementById('book-select-filter');
+        books.forEach(book => {
+            const option = document.createElement('option');
+            option.value = book;
+            option.textContent = book;
+            select.appendChild(option);
+        });
+    } catch (error) {
+        console.error('Error fetching books:', error);
+    }
+}
+
+
+async function fetchBooksByFilters() {
+    const filters = {
+        category: document.getElementById('book-category').value,
+        title: document.getElementById('book-select-filter').value,
+        availability: document.getElementById('book-availability').value,
+        branch_id: document.getElementById('book-branch').value
+    };
+
+    const queryParams = new URLSearchParams(filters);
+
+    try {
+        // Add a loading indicator if required
+        document.querySelector('button[onclick="fetchBooksByFilters()"]').classList.add('loading');
+
+        // Fetch data from the server
+        const response = await fetch(`/fetch_books?${queryParams}`);
+        const books = await response.json();
+
+        // Clear and populate the table
+        const tbody = document.getElementById('booksTable');
+        tbody.innerHTML = '';
+
+        books.forEach(book => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${book.title}</td>
+                <td>${book.category}</td>
+                <td>${book.availability}</td>
+                <td>${book.locations.join(', ') || 'Online Only'}</td>
+            `;
+            tbody.appendChild(row);
+        });
+    } catch (error) {
+        console.error('Error fetching books:', error);
+    } finally {
+        // Remove the loading indicator
+        document.querySelector('button[onclick="fetchBooksByFilters()"]').classList.remove('loading');
+    }
+}
+</script>
+</div>
+
+<div class="main-content" id="future-view-5-content" style="display: none;">
+    <h2 style="margin-top: 80px; padding: 10px;">Events Query Dashboard</h2>
+
+    <div class="filter-panel">
+        <div class="filter-group">
+            <div class="filter-item">
+                <label>Date Range:</label>
+                <div class="date-range">
+                    <input type="date" id="start_date" placeholder="Start Date">
+                    <input type="date" id="end_date" placeholder="End Date">
+                </div>
+            </div>
+
+            <div class="filter-item">
+                <label for="location">Location:</label>
+                <select id="location">
+                    <option value="">All Locations</option>
+                </select>
+            </div>
+
+            <div class="filter-item">
+                <label for="audience">Audience:</label>
+                <select id="audience">
+                    <option value="">All Audiences</option>
+                </select>
+            </div>
+
+            <div class="filter-item">
+                <label for="type">Event Type:</label>
+                <select id="type">
+                    <option value="">All Types</option>
+                </select>
+            </div>
+
+            <div class="filter-item">
+                <label for="language">Language:</label>
+                <select id="language">
+                    <option value="">All Languages</option>
+                </select>
+            </div>
+
+            <div class="filter-item">
+                <button id="fetch-books" onclick="fetchEvents()">Search Events</button>
+            </div>
+        </div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Location</th>
+                <th>Audience</th>
+                <th>Type</th>
+                <th>Language</th>
+            </tr>
+        </thead>
+        <tbody id="eventsTable"></tbody>
+    </table>
+    </div>
+<script>// Initialize the Events Query Dashboard
+function initializeEventsDashboard() {
+    fetchLocations();
+    fetchAudiences();
+    fetchEventTypes();
+    fetchLanguages();
+    fetchEvents(); // Load all events initially
+}
+
+async function fetchLocations() {
+    try {
+        const response = await fetch('/fetch_locations');
+        if (!response.ok) {
+            throw new Error(`Error fetching locations: ${response.statusText}`);
+        }
+        const locations = await response.json();
+        const select = document.getElementById('location');
+        locations.forEach(location => {
+            const option = document.createElement('option');
+            option.value = location;
+            option.textContent = location;
+            select.appendChild(option);
+        });
+    } catch (error) {
+        console.error('Error fetching locations:', error);
+    }
+}
+async function fetchAudiences() {
+    try {
+        const response = await fetch('/fetch_audiences');
+        if (!response.ok) {
+            throw new Error(`Error fetching audiences: ${response.statusText}`);
+        }
+        const audiences = await response.json();
+        const select = document.getElementById('audience');
+        audiences.forEach(audience => {
+            const option = document.createElement('option');
+            option.value = audience;
+            option.textContent = audience;
+            select.appendChild(option);
+        });
+    } catch (error) {
+        console.error('Error fetching audiences:', error);
+    }
+}
+async function fetchEventTypes() {
+    try {
+        const response = await fetch('/fetch_event_types');
+        if (!response.ok) {
+            throw new Error(`Error fetching event types: ${response.statusText}`);
+        }
+        const eventTypes = await response.json();
+        const select = document.getElementById('type');
+        eventTypes.forEach(type => {
+            const option = document.createElement('option');
+            option.value = type;
+            option.textContent = type;
+            select.appendChild(option);
+        });
+    } catch (error) {
+        console.error('Error fetching event types:', error);
+    }
+}
+
+
+// Fetch and populate languages
+async function fetchLanguages() {
+    try {
+        const response = await fetch('/fetch_languages');
+        if (!response.ok) {
+            throw new Error(`Error fetching languages: ${response.statusText}`);
+        }
+        const languages = await response.json();
+        const select = document.getElementById('language');
+        languages.forEach(language => {
+            const option = document.createElement('option');
+            option.value = language;
+            option.textContent = language;
+            select.appendChild(option);
+        });
+    } catch (error) {
+        console.error('Error fetching languages:', error);
+    }
+}
+
+
+// Fetch and populate events
+async function fetchEvents() {
+    const params = {
+        start_date: document.getElementById('start_date').value,
+        end_date: document.getElementById('end_date').value,
+        location: document.getElementById('location').value,
+        audience: document.getElementById('audience').value,
+        type: document.getElementById('type').value,
+        language: document.getElementById('language').value
+    };
+
+    const queryParams = new URLSearchParams(params);
+
+    try {
+        const response = await fetch(`/fetch_events?${queryParams}`);
+        if (!response.ok) {
+            throw new Error(`Error fetching events: ${response.statusText}`);
+        }
+        console.log(response)
+        const events = await response.json();
+        const tbody = document.getElementById('eventsTable');
+        tbody.innerHTML = '';
+
+        events.forEach(event => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${formatDate(event.date)}</td>
+                <td>${event.location}</td>
+                <td>${event.audience}</td>
+                <td>${event.type}</td>
+                <td>${event.language}</td>
+            `;
+            tbody.appendChild(row);
+        });
+    } catch (error) {
+        console.error('Error fetching events:', error);
+    }
+}
+
+
+// Format date to a readable string
+function formatDate(dateString) {
+    const options = { year: 'numeric', month: 'long', day: 'numeric' };
+    return new Date(dateString).toLocaleDateString(undefined, options);
+}
+</script>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Statistics</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}"> <!-- Update path for styles.css -->
+    <script>
+        function togglePopBookTable() {
+            var table = document.getElementById("PopBookTable");
+            var button = document.getElementById("viewPopBookBtn");
+            
+            if (table.style.display === "none") {
+                table.style.display = "block";
+                button.textContent = "Hide Books";
+            } else {
+                table.style.display = "none";
+                button.textContent = "Get most Popular Book from each category";
+            }
+        }
+
+        function toggleTopThreeBookTable() {
+            var table = document.getElementById("TopThreeBookTable");
+            var button = document.getElementById("viewTopThreeBookBtn");
+            
+            if (table.style.display === "none") {
+                table.style.display = "block";
+                button.textContent = "Hide Books";
+            } else {
+                table.style.display = "none";
+                button.textContent = "Top Three Books";
+            }
+        }
+
+        function toggleGrpBookTable() {
+            var table = document.getElementById("GrpBookTable");
+            var button = document.getElementById("viewGrpBookBtn");
+            
+            if (table.style.display === "none") {
+                table.style.display = "block";
+                button.textContent = "Hide Books";
+            } else {
+                table.style.display = "none";
+                button.textContent = "Borrow Range of Books";
+            }
+        }
+
+        function toggleTrendingCategoriesTable() {
+            var table = document.getElementById("TrendingCategoriesTable");
+            var button = document.getElementById("viewTrendingCategoriesBtn");
+            
+            if (table.style.display === "none") {
+                table.style.display = "block";
+                button.textContent = "Hide Books";
+            } else {
+                table.style.display = "none";
+                button.textContent = "Trending Books";
+            }
+        }
+
+        
+        setTimeout(function() {
+            var flashMessage = document.getElementById('flash-message');
+            if (flashMessage) {
+                flashMessage.style.display = 'none';
+            }
+        }, 5000);  // Hide after 5 seconds
+    </script>
+</head>
+<body>
+    <header>
+        <nav class="navbar">
+            <div class="navbar-left">
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Library Logo" class="logo">
+                <ul class="nav-links">
+                    <li><a href="{{ url_for('index2') }}">Manage Books</a></li>
+                    <li><a href="{{ url_for('amagazines') }}">Manage Magazines</a></li>
+                    <li><a href="{{ url_for('aevents') }}">Manage Events</a></li>
+                    <li><a href="{{ url_for('ausers') }}">Manage Users</a></li>
+                    <li class="dropdown">
+                        <a href="{{ url_for('astats') }}">View Statistics</a>
+                        <ul class="dropdown-content"> <!-- Dropdown for Manage Magazines -->
+                            <li><a href="#MostPopularBook">Most Popular</a></li>
+                            <li><a href="#TopThreeBooks">Top 3 Books</a></li>
+                            <li><a href="#BorrowedRangeBooks">Borrow Range</a></li>
+                            <li><a href="#TrendingCategories">Trending Books</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+            <div class="navbar-right">
+                <span class="username">Admin</span>
+            </div>
+        </nav>
+    </header>
+
+<!-- Flash message container -->
+    <div class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div id="flash-message">
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}" role="alert">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+    </div>
+    <br><br>
+
+    <main>
+        <h1>View Statistics</h1>
+        <section id="MostPopularBook">
+            <h2>Most Popular Book in each Category</h2>
+            <button id="viewPopBookBtn" onclick="togglePopBookTable()">Get most Popular Book from each category</button>
+            <div id="PopBookTable" style="display:none;">
+                <table border="1" cellpadding="10">
+                    <thead>
+                        <tr>
+                            <th>ItemID</th>
+                            <th>ISBN</th>
+                            <th>Most Popular</th>
+                            <th>Category</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if most_popular_books %}
+                            {% for mpb in most_popular_books %}
+                                <tr>
+                                    <td>{{ mpb[0] }}</td> 
+                                    <td>{{ mpb[1] }}</td> 
+                                    <td>{{ mpb[2] }}</td> 
+                                    <td>{{ mpb[3] }}</td> 
+                                </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="9">No Books found.</td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            
+            </div>
+        </section>
+
+        
+
+        <br><br>
+
+        <section id="TopThreeBooks">
+            <h2>The top 3 books of the Library!</h2>
+            <button id="viewTopThreeBookBtn" onclick="toggleTopThreeBookTable()">Top Three Books</button>
+            <div id="TopThreeBookTable" style="display:none;">
+                <table border="1" cellpadding="10">
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Total Copies</th>
+                            <th>Rank by Copies</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if top_books %}
+                            {% for tb in top_books %}
+                                <tr>
+                                    <td>{{ tb[0] }}</td> 
+                                    <td>{{ tb[1] }}</td> 
+                                    <td>{{ tb[2] }}</td> 
+                                </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="9">No Books found.</td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            
+            </div>
+        </section>
+
+        
+
+        <br><br>
+
+        <section id="BorrowedRangeBooks">
+            <h2>Grouped books into most borrowed, moderately borrowed and least
+                borrowed.</h2>
+            <button id="viewGrpBookBtn" onclick="toggleGrpBookTable()">Borrow Range of Books</button>
+            <div id="GrpBookTable" style="display:none;">
+                <table border="1" cellpadding="10">
+                    <thead>
+                        <tr>
+                            <th>Category</th>
+                            <th>Title</th>
+                            <th>BorrowRange</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if borrowed_range_books %}
+                            {% for brb in borrowed_range_books %}
+                                <tr>
+                                    <td>{{ brb[0] }}</td> 
+                                    <td>{{ brb[1] }}</td> 
+                                    <td>{{ brb[2] }}</td> 
+                                </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="9">No Books found.</td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            
+            </div>
+        </section>
+
+        
+
+        <br><br>
+
+        <section id="TrendingCategories">
+            <h2>Trending Books!</h2>
+            <button id="viewTrendingCategoriesBtn" onclick="toggleTrendingCategoriesTable()">Trending Books</button>
+            <div id="TrendingCategoriesTable" style="display:none;">
+                <table border="1" cellpadding="10">
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Category</th>
+                            <th>Total Copies</th>
+                            <th>Rank in Category</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if category_rankings %}
+                            {% for cr in category_rankings %}
+                                <tr>
+                                    <td>{{ cr[0] }}</td> 
+                                    <td>{{ cr[1] }}</td> 
+                                    <td>{{ cr[2] }}</td> 
+                                    <td>{{ cr[3] }}</td> 
+                                </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="9">No Books found.</td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+                
+            
+            </div>
+        </section>
+        <br><br>
+        
+        
+
+        <br><br>
+
+
+        
+        
+    </main>
+    <br><br>
+        <footer>
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>About Us</h3>
+                    <p>Your trusted source for knowledge, literature, and culture. Open to the public for over 50 years.</p>
+                </div>
+                <div class="footer-section">
+                    <h3>Technical Support</h3>
+                    <p>Email: srayarala@hawk.iit.edu</p>
+                    <p>Phone: +123 456 7890</p>
+                    <p>Address: 123 Library St, Knowledge City, 45678</p>
+                </div>
+                <div class="footer-section">
+                    <h3>Follow Us</h3>
+                    <ul class="social-links">
+                        <li><a href="#">Facebook</a></li>
+                        <li><a href="#">Twitter</a></li>
+                        <li><a href="#">Instagram</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 Library, All Rights Reserved</p>
+            </div>
+        </footer>
+</body>
+</html>

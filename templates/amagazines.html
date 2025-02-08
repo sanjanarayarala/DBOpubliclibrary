@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Magazines</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}"> <!-- Update path for styles.css -->
+</head>
+<body>
+    <header>
+        <nav class="navbar">
+            <div class="navbar-left">
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Library Logo" class="logo">
+                <ul class="nav-links">
+                    <li><a href="{{ url_for('index2') }}">Manage Books</a></li>
+                    <li class="dropdown">
+                        <a href="{{ url_for('amagazines') }}">Manage Magazines</a>
+                        <ul class="dropdown-content"> <!-- Dropdown for Manage Magazines -->
+                            <li><a href="#AddMagazineForm">Add Magazine</a></li>
+                            <li><a href="#UpdateForm">Update Magazine</a></li>
+                            <li><a href="#DeleteForm">Delete Magazine</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="{{ url_for('aevents') }}">Manage Events</a></li>
+                    <li><a href="{{ url_for('ausers') }}">Manage Users</a></li>
+                    <li><a href="{{ url_for('astats2') }}">View & Query Dashboard</a></li>
+                </ul>
+            </div>
+            <div class="navbar-right">
+                <span class="username">Admin</span>
+            </div>
+        </nav>
+    </header>
+      <!-- Flash message container -->
+    <div class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div id="flash-message">
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}" role="alert">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+    </div>
+    <br><br>
+    <main>
+        <h1>Library Magazines</h1>
+
+        <section id="MM">
+            
+            <table border="1" cellpadding="10">
+                <thead>
+                    <tr>
+                        <th>ItemID</th>
+                        <th>MagazineID</th>
+                        <th>Title</th>
+                        <th>Authors</th>
+                        <th>Publisher</th>
+                        <th>Category</th>
+                        <th>Status</th>
+                        <th>Published Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if magazines %}
+                        {% for magazine in magazines %}
+                            <tr>
+                                <td>{{ magazine[0] }}</td> 
+                                <td>{{ magazine[1] }}</td> 
+                                <td>{{ magazine[2] }}</td> 
+                                <td>{{ magazine[3] }}</td> 
+                                <td>{{ magazine[4] }}</td> 
+                                <td>{{ magazine[5] }}</td> 
+                                <td>{{ magazine[6] }}</td> 
+                                <td>{{ magazine[7] }}</td>  
+                                <td>
+                                    <form action="/delete_magazine/{{ magazine[0] }}" method="POST" style="display:inline;">
+                                        <button type="submit" onclick="return confirm('Are you sure you want to delete this magazine?');">Delete</button>
+                                    </form>
+
+                                    <form action="/update_magazine/{{ magazine[0] }}" method="POST" style="display:inline;">
+{#                                        <input type="text" name="magazineID" placeholder="New MID" >#}
+                                        <input type="text" name="title" placeholder="New Title" >
+                                        <input type="text" name="authors" placeholder="New Authors" >
+                                        <input type="text" name="publisher" placeholder="New Publisher" >
+                                        <input type="text" name="category" placeholder="New Category" >
+                                        <input type="text" name="status" placeholder="New Status" >
+                                        
+                                        <button type="submit">Update</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="9">No magazines found.</td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </section>
+
+        <br><br>
+
+        <section id="AddMagazineForm">
+            <h2>Add a New Magazine</h2>
+            <form action="/add_magazine" method="POST">
+                <label for="magazineID">MagazineID:</label>
+                <input type="text" name="magazineID" id="magazineID" required>
+
+                <label for="title">Title:</label>
+                <input type="text" name="title" id="title" required>
+
+                <label for="authors">Authors:</label>
+                <input type="text" name="authors" id="authors" >
+
+                <label for="publisher">Publisher:</label>
+                <input type="text" name="publisher" id="publisher" >
+
+                <label for="category">Category:</label>
+                <input type="text" name="category" id="category" >
+
+                <label for="status">Status:</label>
+                <input type="text" name="status" id="status" required>
+
+
+                <button type="submit">Add Magazine</button>
+            </form>
+        </section>
+
+        <br><br>
+
+        <!-- Form to Update Based on MagazineID -->
+        <section id="UpdateForm">
+            <h2>Update Magazine Details by ItemID</h2>
+            <form action="/update_magazine_by_id" method="POST">
+                <label for="itemID">ItemID:</label>
+                <input type="text" name="itemID" id="itemID" required>
+
+                <label for="magazineID">MagazineID:</label>
+                <input type="text" name="magazineID" id="magazineID" >
+
+                <label for="title">Title:</label>
+                <input type="text" name="title" id="title" >
+
+                <label for="authors">Authors:</label>
+                <input type="text" name="authors" id="authors" >
+
+                <label for="publisher">Publisher:</label>
+                <input type="text" name="publisher" id="publisher" >
+
+                <label for="category">Category:</label>
+                <input type="text" name="category" id="category" >
+
+                <label for="status">Status:</label>
+                <input type="text" name="status" id="status" >
+
+                
+                <button type="submit">Update Magazine</button>
+            </form>
+        </section>
+
+        <br><br>
+
+        <!-- Form to Delete Based on MagazineID -->
+        <section id="DeleteForm">
+            <h2>Delete Magazine by ItemID</h2>
+            <form action="/delete_magazine_by_id" method="POST">
+                <label for="itemID">ItemID:</label>
+                <input type="text" name="itemID" id="itemID" required>
+                <button type="submit" onclick="return confirm('Are you sure you want to delete this magazine?');">Delete Magazine</button>
+            </form>
+        </section>
+        <br><br>
+        
+    </main>
+    <footer>
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>About Us</h3>
+                <p>Your trusted source for knowledge, literature, and culture. Open to the public for over 50 years.</p>
+            </div>
+            <div class="footer-section">
+                <h3>Technical Support</h3>
+                <p>Email: srayarala@hawk.iit.edu</p>
+                <p>Phone: +123 456 7890</p>
+                <p>Address: 123 Library St, Knowledge City, 45678</p>
+            </div>
+            <div class="footer-section">
+                <h3>Follow Us</h3>
+                <ul class="social-links">
+                    <li><a href="#">Facebook</a></li>
+                    <li><a href="#">Twitter</a></li>
+                    <li><a href="#">Instagram</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2024 Library, All Rights Reserved</p>
+        </div>
+    </footer>
+
+<script>
+        // Optional: Automatically hide the alert after a few seconds
+        setTimeout(function() {
+            var flashMessage = document.getElementById('flash-message');
+            if (flashMessage) {
+                flashMessage.style.display = 'none';
+            }
+        }, 5000);  // Hide after 5 seconds
+    </script>
+
+</body>
+</html>
